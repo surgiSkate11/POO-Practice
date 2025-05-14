@@ -8,8 +8,8 @@ from django.db import IntegrityError
 from django.contrib.auth import login, authenticate, logout
 from django.db.models import Q  # Con Q se combinan condiciones de búsqueda en Django, y pudo usar operadores lógicos para buscar en varios campos de mis modelos
 from django.shortcuts import render, redirect
-from .models import Empleado, Cargo, Departamento, TipoContrato, Rol
-from .forms import EmpleadoForm, CargoForm, DepartamentoForm, ContratoForm, RolForm
+from .models import Empleado, Cargo, Departamento, TipoContrato, Rol, BonificacionExtra
+from .forms import EmpleadoForm, CargoForm, DepartamentoForm, ContratoForm, RolForm, BonificacionForm
 
 # Paginación
 from django.core.paginator import Paginator
@@ -421,3 +421,169 @@ def rol_delete(request, id):
         context = {'title': 'Datos del Rol', 'rol': rol, 'error': 'Error al eliminar el rol'}
         return render(request, 'roles/delete.html', context)
     
+
+@login_required
+def rol_list(request):
+    query = request.GET.get('q', None) 
+    if query:
+        roles = Rol.objects.filter(
+            Q(empleado__nombre__icontains=query) | Q(aniomes__icontains=query)
+            | Q(sueldo__icontains=query) | Q(horas_extra__icontains=query)
+            | Q(bono__icontains=query) | Q(iess__icontains=query)
+            | Q(tot_ing__icontains=query) | Q(tot_des__icontains=query)
+            | Q(neto__icontains=query)
+        )
+    else:
+        roles = Rol.objects.all()
+
+    paginator = Paginator(roles, 5) # Aqui se define la paginación, 5 roles por página
+    page_number = request.GET.get('page') # Luego, se obtiene el número de página actual
+    # y se pasa a la función get_page() del paginador para obtener los roles de esa página
+    page_obj = paginator.get_page(page_number) # Esto devuelve un objeto Page que contiene los roles de la página actual
+
+    context = {'roles': page_obj, 'title': 'Listado de Roles'}
+    return render(request, 'roles/list.html', context)
+
+
+@login_required # Decorador para requerir autenticación
+def rol_create(request):
+    context = {'title': 'Ingresar Rol'}
+    if request.method == "GET":
+        form = RolForm()  # instancia el formulario con los campos vacios
+        context['form'] = form
+        return render(request, 'roles/create.html', context)
+    else:
+        form = RolForm(request.POST)  # instancia el formulario con los datos del post
+        if form.is_valid():
+            form.save()
+            return redirect('empleados:rol_list')
+        else:
+            context['form'] = form
+            return render(request, 'roles/create.html', context)
+
+@login_required # Decorador para requerir autenticación
+        
+def rol_update(request, id):
+    context = {'title': 'Actualizar Rol'}
+    rol = Rol.objects.get(pk=id)
+    if request.method == "GET":
+        form = RolForm(instance=rol)  # Con instance rellena el formulario con los datos del rol
+        context['form'] = form
+        return render(request, 'roles/create.html', context)
+    else:
+        form = RolForm(request.POST, instance=rol)
+        if form.is_valid():
+            form.save()
+            return redirect('empleados:rol_list')
+        else:
+            context['form'] = form
+            return render(request, 'roles/create.html', context)
+
+@login_required # Decorador para requerir autenticación
+        
+def rol_delete(request, id):
+    rol = None
+    try:
+        rol = Rol.objects.get(pk=id)
+        if request.method == "GET":
+            context = {'title': 'Rol a Eliminar', 'rol': rol, 'error': ''}
+            return render(request, 'roles/delete.html', context)
+        else:
+            rol.delete()
+            return redirect('empleados:rol_list')
+    except:
+        context = {'title': 'Datos del Rol', 'rol': rol, 'error': 'Error al eliminar el rol'}
+        return render(request, 'roles/delete.html', context)
+    
+
+#------------------------------------------------------------------------------------------
+
+
+
+@login_required
+def bonificacion_list(request):
+    query = request.GET.get('q', None)
+    if query:
+        bonificaciones = BonificacionExtra.objects.filter(
+            Q(rol__empleado__nombre__icontains=query) | Q(descripcion__icontains=query)
+            | Q(monto__icontains=query)
+        )
+    else:
+        bonificaciones = BonificacionExtra.objects.all()
+
+    paginator = Paginator(bonificaciones, 5) # Aqui se define la paginación, 5 bonificaciones por página
+    page_number = request.GET.get('page') # Luego, se obtiene el número de página actual
+    # y se pasa a la función get_page() del paginador para obtener los bonificaciones de esa página
+    page_obj = paginator.get_page(page_number) # Esto devuelve un objeto Page que contiene los bonificaciones de la página actual
+
+    context = {'bonificaciones': page_obj, 'title': 'Listado de Bonificaciones'}
+    return render(request, 'bonificacion/list.html', context)
+
+
+@login_required # Decorador para requerir autenticación
+def bonificacion_create(request):
+    context = {'title': 'Ingresar Bonificación'}
+    if request.method == "GET":
+        form = BonificacionForm()  # instancia el formulario con los campos vacios
+        context['form'] = form
+        return render(request, 'bonificacion/create.html', context)
+    else:
+        form = BonificacionForm(request.POST)  # instancia el formulario con los datos del post
+        if form.is_valid():
+            form.save()
+            return redirect('empleados:bonificacion_list')
+        else:
+            context['form'] = form
+            return render(request, 'bonificacion/create.html', context)
+
+@login_required # Decorador para requerir autenticación
+
+def bonificacion_update(request, id):
+    context = {'title': 'Actualizar Bonificación'}
+    bonificacion = BonificacionExtra.objects.get(pk=id)
+    if request.method == "GET":
+        form = BonificacionForm(instance=bonificacion)  # Con instance rellena el formulario con los datos de la bonificación
+        context['form'] = form
+        return render(request, 'bonificacion/create.html', context)
+    else:
+        form = BonificacionForm(request.POST, instance=bonificacion)
+        if form.is_valid():
+            form.save()
+            return redirect('empleados:bonificacion_list')
+        else:
+            context['form'] = form
+            return render(request, 'bonificacion/create.html', context)
+
+@login_required # Decorador para requerir autenticación
+
+def bonificacion_update(request, id):
+    context = {'title': 'Actualizar Bonificación'}
+    bonificacion = BonificacionExtra.objects.get(pk=id)
+    if request.method == "GET":
+        form = BonificacionForm(instance=bonificacion)  # Con instance rellena el formulario con los datos de la bonificación
+        context['form'] = form
+        return render(request, 'bonificacion/create.html', context)
+    else:
+        form = BonificacionForm(request.POST, instance=bonificacion)
+        if form.is_valid():
+            form.save()
+            return redirect('empleados:bonificacion_list')
+        else:
+            context['form'] = form
+            return render(request, 'bonificacion/create.html', context)
+
+@login_required # Decorador para requerir autenticación
+
+def bonificacion_delete(request, id):
+    bonificacion = None
+    try:
+        bonificacion = BonificacionExtra.objects.get(pk=id)
+        if request.method == "GET":
+            context = {'title': 'Bonificación a Eliminar', 'bonificacion': bonificacion, 'error': ''}
+            return render(request, 'bonificacion/delete.html', context)
+        else:
+            bonificacion.delete()
+            return redirect('empleados:bonificacion_list')
+    except:
+        context = {'title': 'Datos de la Bonificación', 'bonificacion': bonificacion, 'error': 'Error al eliminar la bonificación'}
+        return render(request, 'bonificacion/delete.html', context)

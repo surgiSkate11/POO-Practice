@@ -1,5 +1,5 @@
 from django.urls import path
-from empleados.views import signup, signout, signin, empleado_create, empleado_list, empleado_update, empleado_delete, cargo_list, cargo_create, cargo_update, cargo_delete, departamento_list, departamento_create, departamento_update, departamento_delete, contrato_list, contrato_create, contrato_update, contrato_delete, rol_list, rol_create, rol_update, rol_delete
+from empleados.views import signup, signout, signin, empleado_create, empleado_list, empleado_update, empleado_delete, cargo_list, cargo_create, cargo_update, cargo_delete, departamento_list, departamento_create, departamento_update, departamento_delete, contrato_list, contrato_create, contrato_update, contrato_delete, rol_list, rol_create, rol_update, rol_delete, bonificacion_list, bonificacion_create, bonificacion_update, bonificacion_delete
 
 app_name = 'empleados'  # Nombre de la aplicación para el espacio de nombres
 
@@ -27,4 +27,8 @@ urlpatterns = [
     path('rol_create/', rol_create, name='rol_create'),
     path('rol_update/<int:id>/', rol_update, name='rol_update'),
     path('rol_delete/<int:id>/', rol_delete, name='rol_delete'),
+    path('bonificacion_list/', bonificacion_list, name='bonificacion_list'),  # URL para la vista bonificaciones
+    path('bonificacion_create/', bonificacion_create, name='bonificacion_create'),
+    path('bonificacion_update/<int:id>/', bonificacion_update, name='bonificacion_update'),
+    path('bonificacion_delete/<int:id>/', bonificacion_delete, name='bonificacion_delete'),
 ]

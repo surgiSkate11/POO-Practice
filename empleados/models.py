@@ -36,10 +36,9 @@ class Empleado(models.Model):
     def __str__(self):
         return self.nombre
 
+
 class Rol(models.Model):
     empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE)
-    #El null y blank es para q los roles tengan obligatoriamente un empleado.
-    
     aniomes = models.DateField()
     sueldo = models.DecimalField(max_digits=10, decimal_places=2)
     horas_extra = models.DecimalField(max_digits=10, decimal_places=2)
@@ -48,26 +47,40 @@ class Rol(models.Model):
     tot_ing = models.DecimalField(max_digits=10, decimal_places=2)
     tot_des = models.DecimalField(max_digits=10, decimal_places=2)
     neto = models.DecimalField(max_digits=10, decimal_places=2)
-     
+    
     def __str__(self):
         return f"Rol de {self.empleado.nombre} para {self.aniomes}"
-
-    # Aquí va la lógica para calcular el IESS, tot_ing, tot_des y neto
     
-    def save(self):
+    def save(self, *args, **kwargs):
+        # Sueldo desde empleado
+        self.sueldo = self.empleado.sueldo
+        
         # Calcular IESS (9.45% del sueldo)
         self.iess = round(self.sueldo * Decimal('0.0945'), 2)
-        
-        # Calcular total ingresos (sueldo + horas_extra + bono)
-        self.tot_ing = round(self.sueldo + self.horas_extra + self.bono, 2)
-        
-        # Calcular total descuentos (iess)
-        self.tot_des = self.iess
-        
-        # Calcular neto a pagar (tot_ing - tot_des)
-        self.neto = round(self.tot_ing - self.tot_des, 2)
-        
-        super(Rol, self).save()
-        
-        # save(*args, **kwargs)
 
+        # Calcular bonificaciones extras (solo si ya está guardado y tiene ID)
+        bonificaciones_suma = Decimal('0')
+        if self.pk:  # Solo si ya existe
+            bonificaciones_suma = self.bonificaciones.aggregate(
+                total=models.Sum('monto')
+            )['total'] or Decimal('0')
+
+        # Calcular ingresos y descuentos
+        self.tot_ing = round(self.sueldo + self.horas_extra + self.bono + bonificaciones_suma, 2)
+        self.tot_des = self.iess
+        self.neto = round(self.tot_ing - self.tot_des, 2)
+
+        super().save(*args, **kwargs)
+
+
+class BonificacionExtra(models.Model):
+    rol = models.ForeignKey(Rol, on_delete=models.CASCADE, related_name='bonificaciones')
+    descripcion = models.CharField(max_length=100)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    def __str__(self):
+        return self.descripcion
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)  # Guarda la bonificación
+        self.rol.save()  # Actualiza los totales del rol asociado
