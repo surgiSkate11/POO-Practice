@@ -4,17 +4,27 @@ from .models import Empleado, Cargo, Departamento, TipoContrato, Rol, Bonificaci
 
 
 class EmpleadoForm(ModelForm):
- 
+    def clean_cedula(self):
+            cedula = self.cleaned_data.get('cedula')
+
+            if not cedula.isdigit():
+                raise forms.ValidationError("La cédula debe contener solo números.")
+            
+            if len(cedula) != 10:
+                raise forms.ValidationError("La cédula debe tener exactamente 10 dígitos.")
+
+            return cedula
     class Meta:
         model = Empleado
         # fields = ['name',' email','phone','cargo']
         #cada campo lo convierte a un control html <input type="text" name="name" id="name" class="form-control" placeholder="Nombre del empleado" required>
         fields = '__all__'
         # exclude = ['phone']
+        
 
         widgets = {
             'nombre': TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del empleado', 'required': 'required'}),
-            'cedula': TextInput(attrs={'class': 'form-control', 'placeholder': 'Cédula', 'required': 'required'}),
+            'cedula': NumberInput(attrs={'class': 'form-control', 'placeholder': 'Cédula', 'required': 'required'}),
             'cargo': Select(attrs={'class': 'form-control', 'placeholder': 'Cargo', 'required': 'required'}),
             'direccion': TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección', 'required': 'required'}),
             'sexo': Select(attrs={'class': 'form-control', 'placeholder': 'Sexo', 'required': 'required'}),

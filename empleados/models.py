@@ -33,6 +33,7 @@ class Empleado(models.Model):
     departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
     tipo_contrato = models.ForeignKey(TipoContrato, on_delete=models.CASCADE)
     
+    
     def __str__(self):
         return self.nombre
 
