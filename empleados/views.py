@@ -6,7 +6,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.contrib.auth import login, authenticate, logout
-from django.db.models import Q  # Con Q se combinan condiciones de búsqueda en Django, y pudo usar operadores lógicos 
+from django.db.models import Q  # Con Q se combinan condiciones de búsqueda en Django, y pudo usar operadores lógicos para buscar en varios campos de mis modelos
 from django.shortcuts import render, redirect
 from .models import Empleado, Cargo, Departamento, TipoContrato, Rol
 from .forms import EmpleadoForm, CargoForm, DepartamentoForm, ContratoForm, RolForm
@@ -139,7 +139,7 @@ def empleado_delete(request,id):
     try:
         empleado = Empleado.objects.get(pk=id)
         if request.method == "GET":
-            context = {'title':'Empleado a Eliminar','empleado':empleado,'error':''}
+            context = {'title':'Eliminar Empleado','empleado':empleado,'error':''}
             return render(request, 'empleado/delete.html',context)
         else:
             empleado.delete()
@@ -274,7 +274,7 @@ def departamento_delete(request, id):
     try:
         departamento = Departamento.objects.get(pk=id)
         if request.method == "GET":
-            context = {'title': 'Departamento a Eliminar', 'departamento': departamento, 'error': ''}
+            context = {'title': 'Eliminar Departamento', 'departamento': departamento, 'error': ''}
             return render(request, 'departamento/delete.html', context)
         else:
             departamento.delete()
@@ -350,7 +350,7 @@ def contrato_delete(request, id):
 
 @login_required
 def rol_list(request):
-    query = request.GET.get('q', None)
+    query = request.GET.get('q', None) 
     if query:
         roles = Rol.objects.filter(
             Q(empleado__nombre__icontains=query) | Q(aniomes__icontains=query)
@@ -362,9 +362,10 @@ def rol_list(request):
     else:
         roles = Rol.objects.all()
 
-    paginator = Paginator(roles, 5)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    paginator = Paginator(roles, 5) # Aqui se define la paginación, 5 roles por página
+    page_number = request.GET.get('page') # Luego, se obtiene el número de página actual
+    # y se pasa a la función get_page() del paginador para obtener los roles de esa página
+    page_obj = paginator.get_page(page_number) # Esto devuelve un objeto Page que contiene los roles de la página actual
 
     context = {'roles': page_obj, 'title': 'Listado de Roles'}
     return render(request, 'roles/list.html', context)
